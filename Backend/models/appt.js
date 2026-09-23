@@ -30,12 +30,10 @@ class Appt {
     player_2 = await this.checkUser(data.player_2);
 
     try{
-      console.log("STARTDFLDFJLSDFJ");
       await this.checkMax(player_1);
       await this.checkMax(player_2);
     }
     catch{
-      console.log("HELLLODFLDFJLSDFJ");
       return {msg:"Max Appointments Reached"};
     }
     
