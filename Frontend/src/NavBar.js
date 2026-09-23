@@ -13,7 +13,7 @@ function NavBar({user}) {
       <div>
         <Navbar expand="md">
           <NavLink exact to="/" className="navbar-brand">
-            GameBuddy
+            GameBuddy V2
           </NavLink>
 
           <Nav className="ml-auto" navbar>
