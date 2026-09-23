@@ -12,7 +12,7 @@ permissions:
   packages: write   # push to ghcr.io with GITHUB_TOKEN
 
 env:
-  IMAGE_PREFIX: ghcr.io/sgtCrunch/gamebuddy
+  IMAGE_PREFIX: ghcr.io/sgtcrunch/gamebuddy
   GITOPS_REPO: sgtCrunch/gamebuddy-gitops
   GITOPS_OVERLAY: overlays/local
 

@@ -60,7 +60,7 @@ then deploys the images CI builds from this repo.
 
 1. **Test**: `npm run test:ci` in `Backend/`
 2. **Build + push**: backend and frontend images (linux/amd64 + arm64) to
-   `ghcr.io/sgtCrunch/gamebuddy-{backend,frontend}:<commit SHA>`
+   `ghcr.io/sgtcrunch/gamebuddy-{backend,frontend}:<commit SHA>`
 3. **Deploy**: commits the new tag to
    [gamebuddy-gitops](https://github.com/sgtCrunch/gamebuddy-gitops)
    (`overlays/local/kustomization.yaml`), which Argo CD syncs
