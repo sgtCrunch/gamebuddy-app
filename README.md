@@ -13,6 +13,56 @@ Kubernetes manifests live in
 [sgtCrunch/gamebuddy-gitops](https://github.com/sgtCrunch/gamebuddy-gitops),
 which Argo CD watches.
 
+## How it deploys
+
+```mermaid
+flowchart LR
+  dev["Developer<br/>git push"]
+
+  subgraph GH["GitHub"]
+    app["gamebuddy-app repo<br/>code · Dockerfiles · CI"]
+    subgraph CI["GitHub Actions · ci.yml"]
+      test["test<br/>npm run test:ci"] --> build["build images<br/>amd64 + arm64"] --> bump["update-gitops"]
+    end
+    ghcr[("GHCR<br/>images tagged :commit-SHA")]
+    gitops["gamebuddy-gitops repo<br/>manifests · image tag"]
+  end
+
+  subgraph PC["Local machine · Docker Desktop → kind cluster"]
+    argo["Argo CD"]
+    subgraph NS["namespace gamebuddy"]
+      fe["frontend<br/>nginx :80"]
+      be["backend<br/>API :3001 · chat :4000"]
+      db[("postgres<br/>StatefulSet + PVC")]
+    end
+    browser["Browser<br/>localhost:3000"]
+  end
+
+  steam["Steam Web API"]
+
+  dev -->|"1 · push to main"| app
+  app -->|"2 · triggers CI"| test
+  build -->|"3 · push image"| ghcr
+  bump -->|"4 · commit new tag"| gitops
+  argo -.->|"5 · polls every 60s"| gitops
+  argo -->|"6 · sync"| NS
+  ghcr -->|"7 · image pull"| NS
+  browser -->|"port-forward"| fe
+  browser -->|"port-forward"| be
+  be --> db
+  be -.->|"login · owned games"| steam
+```
+
+1. **Push** to `main` in this repo: the only manual step.
+2. **CI** (`.github/workflows/ci.yml`) runs the backend unit tests; if they fail, nothing ships.
+3. **Build and publish:** backend and frontend images are built for amd64 and arm64 and pushed to GHCR, tagged with the commit SHA (never `latest`).
+4. **Record the deploy:** CI commits the new tag to `overlays/local/kustomization.yaml` in [gamebuddy-gitops](https://github.com/sgtCrunch/gamebuddy-gitops). CI never touches the cluster.
+5. **Argo CD**, running inside the cluster, polls the GitOps repo every 60 seconds and sees the change.
+6. **Sync:** Argo CD applies the manifests; Kubernetes rolls the Deployments to the new tag (new Pods start before old ones stop).
+7. **Pull:** the cluster pulls the new images from GHCR, and the app is live.
+
+**Rollback:** revert the *"Deploy …"* commit in the GitOps repo; Argo CD puts the previous image back within a minute, with no rebuild needed.
+
 ## Run with Docker
 
 ```bash
